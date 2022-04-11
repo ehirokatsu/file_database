@@ -2,9 +2,7 @@
 
     //共通設定を取得する
     require('env.inc');
-    
-    //$sql = null;//初期化
-    //$stmt = null;
+
 
     //検索キーが指定された場合
     if (isset($_REQUEST['fkey'])) {
@@ -31,14 +29,15 @@
         $dbh->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
     
         //一覧表示するSQL文
-        $sql = "select fid, fext, ftype, fname, rdate from file_t";
-
-        //検索キーが指定されていればwhere文を追加する
-        if ($fkey != "") {
-            $sql .= " where (fname like '%$fkey%')";
-        }
-        $sql .= " order by fid desc";
+        $sql = "select fid, fext, ftype, fname, rdate from file_t where fname like :fkey order by fid desc";
+        
         $stmt = $dbh->prepare($sql);
+        
+        //部分一致をプレースホルダで使用する時は％ごと置き換える。
+        $key = "%$fkey%";
+
+        $stmt->bindValue(':fkey', $key, PDO::PARAM_STR);
+
         $stmt->execute();
         
         //データベースを閉じる
@@ -88,9 +87,10 @@
 </tr>
 
 <?php
+
     if ($stmt) {
         while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        
+            
             //各列の値を変数に取り出す
             $fid = $row['fid'];
             $fext = $row['fext'];
